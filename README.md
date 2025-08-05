@@ -35,11 +35,11 @@ The system creates a seamless pipeline where each problem’s output becomes the
 ## 🚀 How It Works
 
 1. **Login**  
-   User enters a password; Borze logic validates and decodes it.  
+   User enters a password (must consist of only 1, 2, and/or 0); Borze logic validates and decodes it.  
 2. **Create Tasks**  
    Enter task names; the system applies Atilla’s Favorite and Calculating Function to assign priorities.  
 3. **Sort & Validate**  
-   Tasks are listed from highest to lowest priority, and Do Not Be Distracted ensures no backtracking.
+   Tasks are listed from highest to lowest priority, and Do Not Be Distracted ensures no backtracking. If it violates the rule of Do Not Be Distracted, the system will show an error message telling the user that their sequence is not valid.
 
 
 # For more details about the competition:
