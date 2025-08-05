@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .task-container {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h3 {
+      text-align: center;
+      color: #007bff;
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      color: #333;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border: none;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+    .btn-secondary {
+      margin-top: 20px;
+      background-color: #6c757d;
+      border: none;
+    }
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+    .task-table {
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      padding: 10px;
+    }
+    td {
+      padding: 10px;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr.dragging {
+      opacity: 0.5;
+    }
+    #messageContainer {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="task-container">
+    <h3>Task Manager</h3>
+    <div class="mb-3">
+      <label for="taskInput" class="form-label">Enter your task</label>
+      <input type="text" id="taskInput" class="form-control" placeholder="e.g., Math Homework">
+    </div>
+    <button id="addTaskBtn" class="btn btn-primary w-100">Add Task</button>
+    <table class="table task-table mt-3">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="taskTableBody">
+        <!-- Rows will be added here -->
+      </tbody>
+    </table>
+    <button id="checkSequenceBtn" class="btn btn-secondary w-100 mt-3">Check Tasks' Sequence</button>
+    <div id="messageContainer" class="mt-2"></div>
+  </div>
+
+  <script src="logic.js"></script>
+  <script>
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskInput = document.getElementById("taskInput");
+    const taskTableBody = document.getElementById("taskTableBody");
+    const checkSequenceBtn = document.getElementById("checkSequenceBtn");
+
+    let taskId = 1; // Counter for task IDs
+
+    addTaskBtn.addEventListener("click", () => {
+      const taskValue = taskInput.value.trim() + " (" + getPriority(taskInput.value.trim()) + ")";
+
+      if (taskValue === "") {
+        alert("Please enter a task!");
+        return;
+      }
+
+      // Create a new row
+      const newRow = document.createElement("tr");
+      newRow.setAttribute("draggable", "true"); // Enable dragging
+      newRow.innerHTML = `
+        <td>${taskId}</td>
+        <td>${taskValue}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteTask(this)">Delete</button></td>
+      `;
+
+      // Add drag events
+      newRow.addEventListener("dragstart", handleDragStart);
+      newRow.addEventListener("dragover", handleDragOver);
+      newRow.addEventListener("drop", handleDrop);
+      newRow.addEventListener("dragend", handleDragEnd);
+
+      // Append the row to the table body
+      taskTableBody.appendChild(newRow);
+
+      // Increment the task ID
+      taskId++;
+
+      // Clear the input field
+      taskInput.value = "";
+    });
+
+    // Delete task function
+    function deleteTask(button) {
+      const row = button.parentElement.parentElement;
+      row.remove();
+    }
+
+    // Drag and Drop functionality
+    let draggedRow = null;
+
+    function handleDragStart(event) {
+      draggedRow = this;
+      setTimeout(() => {
+        this.classList.add("dragging");
+      }, 0);
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault(); // Necessary to allow dropping
+      const targetRow = this;
+      if (draggedRow !== targetRow) {
+        const bounding = targetRow.getBoundingClientRect();
+        const offset = event.clientY - bounding.top + bounding.height / 2;
+        if (offset > bounding.height / 2) {
+          targetRow.parentNode.insertBefore(draggedRow, targetRow.nextSibling);
+        } else {
+          targetRow.parentNode.insertBefore(draggedRow, targetRow);
+        }
+      }
+    }
+
+    function handleDrop() {
+      this.classList.remove("dragging");
+    }
+
+    function handleDragEnd() {
+      this.classList.remove("dragging");
+      draggedRow = null;
+    }
+
+    // Check sequence functionality
+    checkSequenceBtn.addEventListener("click", () => {
+      const rows = document.querySelectorAll("#taskTableBody tr");
+      const tasks = [];
+      rows.forEach((row) => {
+        const taskText = row.children[1].textContent;
+        tasks.push(taskText);
+      });
+
+      // Call the checkSequence function from the external JS file
+      const isValid = checkSequence(tasks); // Returns true or false
+
+      // Get the message container
+      const messageContainer = document.getElementById("messageContainer");
+
+      // Display a success or error message in the container
+      if (isValid) {
+        messageContainer.innerHTML = `<div class="alert alert-success">Sequence is valid! ✅</div>`;
+      } else {
+        messageContainer.innerHTML = `<div class="alert alert-danger">Sequence is invalid. ❌ Please rearrange the tasks.</div>`;
+      }
+    });
+  </script>
+</body>
+</html>
